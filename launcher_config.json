@@ -24,6 +24,6 @@ NOTE: Set it to "false" or only "" to not use the client folder, so everything w
 		}
 	],
 	"clientFolder": "XXXOTS",
-	"newClientUrl" : "https://github.com/Naroxx/xxxots/releases/download/untagged-b0def4cfb6ed0ab713c6/XXXOTS.15.rar",
+	"newClientUrl" : "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
 	"clientExecutable": "XXXOTS.exe"
 }
