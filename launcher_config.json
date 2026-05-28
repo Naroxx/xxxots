@@ -14,6 +14,8 @@
 		}
 	],
 	"clientFolder": "XXXOTS",
-	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-1.1/XXXOTS-1.1.zip",
+	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
+	"fullClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
+	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-1.1/XXXOTS-1.1.zip",
 	"clientExecutable": "xxxots.exe"
 }
