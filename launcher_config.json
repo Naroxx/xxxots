@@ -6,12 +6,6 @@
 		{
 			"name": "assets"
 		},
-		{
-			"name": "storeimages"
-		},
-		{
-			"name": "bin"
-		}
 	],
 	"clientFolder": "XXXOTS",
 	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
