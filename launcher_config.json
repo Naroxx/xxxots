@@ -1,5 +1,5 @@
 {
-	"clientVersion": "1.7",
+	"clientVersion": "1.8",
 	"launcherVersion": "1.0",
 	"replaceFolders": true,
 	"replaceFolderName": [
@@ -10,6 +10,6 @@
 	"clientFolder": "XXXOTS",
 	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
 	"fullClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client/XXXOTS.zip",
-	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-1.1/client-17.zip",
+	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-1.1/client-18.zip",
 	"clientExecutable": "xxxots.exe"
 }
