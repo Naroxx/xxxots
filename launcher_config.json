@@ -1,0 +1,14 @@
+{
+	"clientVersion": "15.00.249ccc",
+	"launcherVersion": "1.0",
+	"replaceFolders": true,
+	"replaceFolderName": [
+		{ "name": "assets" },
+		{ "name": "bin" },
+		{ "name": "storeimages" },
+		{ "name": "sounds" }
+	],
+	"clientFolder": "XXXOTS",
+	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-15.00.249ccc/XXXOTS-client.zip",
+	"clientExecutable": "XXXOTS.exe"
+}

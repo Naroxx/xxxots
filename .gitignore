@@ -1,0 +1,11 @@
+# Launcher build output
+bin/
+obj/
+.vs/
+*.user
+packages/
+
+# Release archives are uploaded to GitHub Releases, never committed
+*.zip
+*.rar
+*.7z

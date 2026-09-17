@@ -16,7 +16,7 @@
 		ResizeMode="NoResize"
 		WindowState="Normal"
 		WindowStartupLocation="CenterScreen"
-		Title="Tibia Launcher"
+		Title="XXXOTS Launcher"
 		Loaded="TibiaLauncher_Load">
 	<Grid>
 
