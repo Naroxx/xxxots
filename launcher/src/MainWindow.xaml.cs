@@ -13,7 +13,8 @@ using System.Diagnostics;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Ionic.Zip;
+using System.IO.Compression;
+using System.Security.Cryptography;
 using LauncherConfig;
 
 namespace CanaryLauncherUpdate
@@ -70,20 +71,16 @@ namespace CanaryLauncherUpdate
 
 		static void CreateShortcut()
 		{
-			string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-			string shortcutPath = Path.Combine(desktopPath, clientConfig.clientFolder + ".lnk");
-			Type t = Type.GetTypeFromProgID("WScript.Shell");
-			dynamic shell = Activator.CreateInstance(t);
-			var lnk = shell.CreateShortcut(shortcutPath);
 			try
 			{
-				lnk.TargetPath = Assembly.GetExecutingAssembly().Location.Replace(".dll", ".exe");
-				lnk.Description = clientConfig.clientFolder;
-				lnk.Save();
+				string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+				string shortcutPath = Path.Combine(desktopPath, "XXXOTS.lnk");
+				string launcherPath = Assembly.GetExecutingAssembly().Location;
+				ShellLink.Create(shortcutPath, launcherPath, Path.GetDirectoryName(launcherPath), "XXXOTS Launcher");
 			}
-			finally
+			catch (Exception)
 			{
-				System.Runtime.InteropServices.Marshal.FinalReleaseComObject(lnk);
+				// A missing desktop shortcut must never break the update
 			}
 		}
 
@@ -132,23 +129,6 @@ namespace CanaryLauncherUpdate
 			return ClientConfig.GetLocalClientVersion(path);
 		}
 
-		private void AddReadOnly()
-		{
-			// If the files "eventschedule/boostedcreature/onlinenumbers" exist, set them as read-only
-			string eventSchedulePath = GetLauncherPath() + "/cache/eventschedule.json";
-			if (File.Exists(eventSchedulePath)) {
-				File.SetAttributes(eventSchedulePath, FileAttributes.ReadOnly);
-			}
-			string boostedCreaturePath = GetLauncherPath() + "/cache/boostedcreature.json";
-			if (File.Exists(boostedCreaturePath)) {
-				File.SetAttributes(boostedCreaturePath, FileAttributes.ReadOnly);
-			}
-			string onlineNumbersPath = GetLauncherPath() + "/cache/onlinenumbers.json";
-			if (File.Exists(onlineNumbersPath)) {
-				File.SetAttributes(onlineNumbersPath, FileAttributes.ReadOnly);
-			}
-		}
-
 		private void UpdateClient()
 		{
 			if (!Directory.Exists(GetLauncherPath(true)))
@@ -195,15 +175,50 @@ namespace CanaryLauncherUpdate
 			}
 		}
 
-		private void ExtractZip(string path, ExtractExistingFileAction existingFileAction)
+		// Extracts with overwrite and refuses entries that would land outside the client folder
+		private void ExtractZip(string path)
 		{
-			using (ZipFile modZip = ZipFile.Read(path))
+			string root = Path.GetFullPath(GetLauncherPath()).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+			using (ZipArchive archive = ZipFile.OpenRead(path))
 			{
-				foreach (ZipEntry zipEntry in modZip)
+				foreach (ZipArchiveEntry entry in archive.Entries)
 				{
-					zipEntry.Extract(GetLauncherPath(), existingFileAction);
+					string target = Path.GetFullPath(Path.Combine(root, entry.FullName));
+					if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+					{
+						throw new InvalidDataException("Invalid path in client archive: " + entry.FullName);
+					}
+
+					if (string.IsNullOrEmpty(entry.Name))
+					{
+						Directory.CreateDirectory(target);
+						continue;
+					}
+
+					Directory.CreateDirectory(Path.GetDirectoryName(target));
+					if (File.Exists(target))
+					{
+						File.SetAttributes(target, FileAttributes.Normal);
+					}
+					entry.ExtractToFile(target, true);
 				}
 			}
+		}
+
+		private static string ComputeSha256(string path)
+		{
+			using (SHA256 sha = SHA256.Create())
+			using (FileStream stream = File.OpenRead(path))
+			{
+				return BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "");
+			}
+		}
+
+		private static bool IsPlainFolderName(string name)
+		{
+			return !string.IsNullOrWhiteSpace(name)
+				&& name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0
+				&& name != "." && name != "..";
 		}
 
 		private void ShowUpdateFailed(string message)
@@ -231,12 +246,25 @@ namespace CanaryLauncherUpdate
 				string zipPath = Path.Combine(GetLauncherPath(), "tibia.zip");
 
 				// Adds the task to a secondary task to prevent the program from crashing while this is running
+				labelDownloadPercent.Content = "Verifying...";
 				await Task.Run(() =>
 				{
+					// Only install the exact archive that was published
+					if (!string.IsNullOrEmpty(clientConfig.clientSha256)
+						&& !string.Equals(ComputeSha256(zipPath), clientConfig.clientSha256, StringComparison.OrdinalIgnoreCase))
+					{
+						throw new InvalidDataException("Downloaded client is corrupted (checksum mismatch). Please try again.");
+					}
+
 					if (clientConfig.replaceFolders && clientConfig.replaceFolderName != null)
 					{
 						foreach (ReplaceFolderName folderName in clientConfig.replaceFolderName)
 						{
+							if (folderName == null || !IsPlainFolderName(folderName.name))
+							{
+								continue;
+							}
+
 							string folderPath = Path.Combine(GetLauncherPath(), folderName.name);
 							if (Directory.Exists(folderPath))
 							{
@@ -246,7 +274,7 @@ namespace CanaryLauncherUpdate
 					}
 
 					Directory.CreateDirectory(GetLauncherPath());
-					ExtractZip(zipPath, ExtractExistingFileAction.OverwriteSilently);
+					ExtractZip(zipPath);
 					File.Delete(zipPath);
 				});
 				progressbarDownload.Value = 100;
@@ -264,7 +292,6 @@ namespace CanaryLauncherUpdate
 			buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
 			buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_play.png"));
 
-			AddReadOnly();
 			CreateShortcut();
 
 			needUpdate = false;

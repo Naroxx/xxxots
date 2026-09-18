@@ -17,6 +17,8 @@ namespace LauncherConfig
 		public ReplaceFolderName[] replaceFolderName { get; set; }
 		public string clientFolder { get; set; }
 		public string newClientUrl { get; set; }
+		// SHA-256 (hex) of the archive at newClientUrl; the download is rejected when it does not match
+		public string clientSha256 { get; set; }
 		public string clientExecutable { get; set; }
 
 		// Loaded once by SplashScreen and shared with MainWindow

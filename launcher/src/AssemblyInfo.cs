@@ -1,4 +1,16 @@
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
+
+[assembly: AssemblyTitle("XXXOTS Launcher")]
+[assembly: AssemblyDescription("Launcher and updater for the XXXOTS game client")]
+[assembly: AssemblyCompany("XXXOTS")]
+[assembly: AssemblyProduct("XXXOTS Launcher")]
+[assembly: AssemblyCopyright("Copyright © 2026 XXXOTS")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
+[assembly: AssemblyInformationalVersion("1.1.0")]
+[assembly: ComVisible(false)]
 
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None, //where theme specific resource dictionaries are located
