@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Linq;
 using LauncherConfig;
 
 namespace CanaryLauncherUpdate
@@ -30,6 +31,16 @@ namespace CanaryLauncherUpdate
 
 		private async void SplashScreen_Loaded(object sender, RoutedEventArgs e)
 		{
+			string[] args = Environment.GetCommandLineArgs().Skip(1).ToArray();
+			bool justUpdated = args.Contains(LauncherUpdater.UpdatedFlag);
+			string configOverride = args.FirstOrDefault(a => a.StartsWith("--config="));
+			if (configOverride != null)
+			{
+				ClientConfig.ConfigSource = configOverride.Substring("--config=".Length);
+			}
+
+			await Task.Run(() => LauncherUpdater.CleanupPreviousUpdate());
+
 			string error = null;
 			bool loaded = await Task.Run(() => ClientConfig.TryLoadRemote(out error));
 			if (!loaded)
@@ -38,6 +49,21 @@ namespace CanaryLauncherUpdate
 					"XXXOTS Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
 				Application.Current.Shutdown();
 				return;
+			}
+
+			// Replace the launcher itself when a newer one is published (at most once per start)
+			if (!justUpdated && LauncherUpdater.IsUpdateAvailable(ClientConfig.Current))
+			{
+				labelStatus.Text = "Updating launcher...";
+				labelStatus.Visibility = Visibility.Visible;
+				string updateError = null;
+				bool updated = await Task.Run(() => LauncherUpdater.TryUpdate(ClientConfig.Current, args, out updateError));
+				if (updated)
+				{
+					Application.Current.Shutdown();
+					return;
+				}
+				labelStatus.Visibility = Visibility.Collapsed;
 			}
 
 			// Start the client right away if it is installed and up to date

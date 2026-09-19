@@ -21,6 +21,7 @@
 			VerticalAlignment="Center"
 			Visibility="Visible"></Image>
 		<TextBlock
+			x:Name="labelStatus"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Center"
 			Margin="0, 180, 0, 0"

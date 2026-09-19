@@ -8,7 +8,8 @@ namespace LauncherConfig
 	public class ClientConfig
 	{
 		// Remote launcher_config.json, the single source of truth for versions and download links
-		public const string ConfigUrl = "https://raw.githubusercontent.com/Naroxx/xxxots/main/launcher_config.json";
+		// (launcher_config.json in the repo root is only a notice for launchers older than 1.2)
+		public const string ConfigUrl = "https://raw.githubusercontent.com/Naroxx/xxxots/main/config/launcher.json";
 		public const string LocalConfigName = "launcher_config.json";
 
 		public string clientVersion { get; set; }
@@ -20,12 +21,23 @@ namespace LauncherConfig
 		// SHA-256 (hex) of the archive at newClientUrl; the download is rejected when it does not match
 		public string clientSha256 { get; set; }
 		public string clientExecutable { get; set; }
+		// Launcher self-update: zip with "XXXOTS Launcher.exe" + dlls, installed when launcherVersion is newer
+		public string launcherUrl { get; set; }
+		public string launcherSha256 { get; set; }
 
 		// Loaded once by SplashScreen and shared with MainWindow
 		public static ClientConfig Current { get; private set; }
 
+		// Where the config is read from; "--config=<file>" overrides it for local testing
+		public static string ConfigSource { get; set; } = ConfigUrl;
+
 		public static ClientConfig loadFromUrl(string url)
 		{
+			if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+			{
+				return JsonConvert.DeserializeObject<ClientConfig>(File.ReadAllText(url));
+			}
+
 			using (HttpClient client = new HttpClient())
 			{
 				client.Timeout = TimeSpan.FromSeconds(15);
@@ -40,7 +52,7 @@ namespace LauncherConfig
 		{
 			try
 			{
-				ClientConfig config = loadFromUrl(ConfigUrl);
+				ClientConfig config = loadFromUrl(ConfigSource);
 				if (config == null || string.IsNullOrEmpty(config.clientVersion) || string.IsNullOrEmpty(config.newClientUrl))
 				{
 					error = "launcher_config.json is missing clientVersion or newClientUrl.";
