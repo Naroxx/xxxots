@@ -1,5 +1,5 @@
 {
-	"clientVersion": "POBIERZ NOWY LAUNCHER: xxxots.pl",
+	"clientVersion": "NOWY LAUNCHER: xxxots.pl",
 	"launcherVersion": "0",
 	"replaceFolders": false,
 	"replaceFolderName": [],
@@ -7,5 +7,5 @@
 	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
 	"fullClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
 	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
-	"clientExecutable": "POBIERZ-NOWY-LAUNCHER-xxxots.pl.exe"
+	"clientExecutable": "XXXOTS.exe"
 }
