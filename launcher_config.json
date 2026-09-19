@@ -4,8 +4,8 @@
 	"replaceFolders": false,
 	"replaceFolderName": [],
 	"clientFolder": "XXXOTS",
-	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-obsolete/pobierz-nowy-launcher-xxxots.pl.zip",
-	"fullClientUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-obsolete/pobierz-nowy-launcher-xxxots.pl.zip",
-	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-obsolete/pobierz-nowy-launcher-xxxots.pl.zip",
+	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
+	"fullClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
+	"updateClientUrl": "https://github.com/Naroxx/xxxots/releases/latest",
 	"clientExecutable": "POBIERZ-NOWY-LAUNCHER-xxxots.pl.exe"
 }
