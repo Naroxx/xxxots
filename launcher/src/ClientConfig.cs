@@ -57,6 +57,30 @@ namespace LauncherConfig
 			}
 		}
 
+		// Server data the client caches until CipSoft's server save (10:00 CET), not ours.
+		// Removing them before every start makes the client fetch fresh values from login.php.
+		private static readonly string[] StaleServerCacheFiles = { "boostedcreature.json", "eventschedule.json" };
+
+		public static void ClearStaleServerCache(string clientDirectory)
+		{
+			foreach (string name in StaleServerCacheFiles)
+			{
+				string path = Path.Combine(clientDirectory, "cache", name);
+				try
+				{
+					if (File.Exists(path))
+					{
+						File.SetAttributes(path, FileAttributes.Normal);
+						File.Delete(path);
+					}
+				}
+				catch (Exception)
+				{
+					// Never block the game start because of a cache file
+				}
+			}
+		}
+
 		// Version of the client installed next to the launcher, or "" when unknown
 		public static string GetLocalClientVersion(string directory)
 		{

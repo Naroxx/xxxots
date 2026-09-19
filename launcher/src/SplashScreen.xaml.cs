@@ -45,6 +45,7 @@ namespace CanaryLauncherUpdate
 			string actualVersion = ClientConfig.GetLocalClientVersion(GetLauncherPath(true));
 			if (actualVersion == ClientConfig.Current.clientVersion && File.Exists(executable))
 			{
+				ClientConfig.ClearStaleServerCache(GetLauncherPath());
 				Process.Start(new ProcessStartInfo(executable) { WorkingDirectory = Path.GetDirectoryName(executable) });
 				Application.Current.Shutdown();
 				return;

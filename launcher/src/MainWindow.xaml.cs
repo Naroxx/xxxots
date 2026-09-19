@@ -58,6 +58,7 @@ namespace CanaryLauncherUpdate
 				return;
 			}
 
+			ClientConfig.ClearStaleServerCache(GetLauncherPath());
 			Process.Start(new ProcessStartInfo(executable) { WorkingDirectory = Path.GetDirectoryName(executable) });
 			this.Close();
 		}
