@@ -17,6 +17,8 @@
 		WindowState="Normal"
 		WindowStartupLocation="CenterScreen"
 		Title="XXXOTS Launcher"
+		RenderOptions.BitmapScalingMode="HighQuality"
+		UseLayoutRounding="True"
 		Loaded="TibiaLauncher_Load">
 	<Grid>
 
@@ -41,7 +43,7 @@
 			<BitmapImage x:Key="RhLoreKey" UriSource="pack://application:,,,/Assets/rh_lore.png"/>
 		</Grid.Resources>
 		<Grid.Background>
-			<ImageBrush ImageSource="{StaticResource BackGroundKey}" Stretch="UniformToFill" Opacity="100"></ImageBrush>
+			<ImageBrush x:Name="backgroundBrush" RenderOptions.BitmapScalingMode="HighQuality" ImageSource="{StaticResource BackGroundKey}" Stretch="UniformToFill" Opacity="100"></ImageBrush>
 		</Grid.Background>
 		<StackPanel
 			Grid.Column="1"
@@ -65,14 +67,48 @@
 				Cursor="Hand"/>
 		</StackPanel>
 
+
+		<!-- XXXOTS 2.0: wybor serwera -->
+		<Border x:Name="tileXxx" Grid.Row="0" Width="200" Height="84" Margin="22,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+				Background="#B0101010" BorderThickness="2" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="tileXxx_MouseDown">
+			<Grid Margin="6">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="66"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				<Image Grid.Column="0" Source="pack://application:,,,/Assets/logo_tile.png" Height="64" Stretch="Uniform" VerticalAlignment="Center"/>
+				<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+					<TextBlock x:Name="tileXxxName" FontFamily="Verdana" FontSize="13" FontWeight="Bold" Foreground="#E8B04A">Server</TextBlock>
+					<TextBlock x:Name="tileXxxSub" FontFamily="Verdana" FontSize="9" Foreground="#a0a0a0" TextWrapping="Wrap" Margin="0,2,0,0">Subtitle</TextBlock>
+					<TextBlock x:Name="tileXxxStatus" FontFamily="Verdana" FontSize="11" FontWeight="Bold" Foreground="#d8d8d8" Margin="0,4,0,0">...</TextBlock>
+				</StackPanel>
+			</Grid>
+		</Border>
+
+		<!-- XXXOTS 2.0: wybor serwera -->
+		<Border x:Name="tileUltra" Grid.Row="0" Width="200" Height="84" Margin="0,0,22,0" HorizontalAlignment="Right" VerticalAlignment="Center"
+				Background="#B0101010" BorderThickness="2" CornerRadius="4" Cursor="Hand" MouseLeftButtonDown="tileUltra_MouseDown">
+			<Grid Margin="6">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="66"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				<Image Grid.Column="0" Source="pack://application:,,,/Assets/logo_tile_ultra.png" Height="64" Stretch="Uniform" VerticalAlignment="Center"/>
+				<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+					<TextBlock x:Name="tileUltraName" FontFamily="Verdana" FontSize="13" FontWeight="Bold" Foreground="#8BE33A">Server</TextBlock>
+					<TextBlock x:Name="tileUltraSub" FontFamily="Verdana" FontSize="9" Foreground="#a0a0a0" TextWrapping="Wrap" Margin="0,2,0,0">Subtitle</TextBlock>
+					<TextBlock x:Name="tileUltraStatus" FontFamily="Verdana" FontSize="11" FontWeight="Bold" Foreground="#d8d8d8" Margin="0,4,0,0">...</TextBlock>
+				</StackPanel>
+			</Grid>
+		</Border>
 		<StackPanel
 			Grid.Row="0"
 			VerticalAlignment="Bottom"
 			HorizontalAlignment="Center"
-			Margin="0, 15">
+			Margin="0, 4">
 			<Image
 				x:Name="ImageLogoServer"
-				Height="120"
+				Height="140"
 				Source="{StaticResource LogoKey}"
 				Stretch="Uniform"
 				HorizontalAlignment="Center"
@@ -87,7 +123,7 @@
 			VerticalAlignment="Top"
 			HorizontalAlignment="Center">
 			<StackPanel.Background>
-				<ImageBrush ImageSource="{StaticResource BGButtonUpdateKey}" Stretch="Fill"></ImageBrush>
+				<ImageBrush x:Name="bgButtonBrush" RenderOptions.BitmapScalingMode="HighQuality" ImageSource="{StaticResource BGButtonUpdateKey}" Stretch="Fill"></ImageBrush>
 			</StackPanel.Background>
 			<StackPanel>
 				<Button
@@ -185,7 +221,7 @@
 			VerticalAlignment="Top"
 			HorizontalAlignment="Center">
 			<StackPanel.Background>
-				<ImageBrush ImageSource="{StaticResource BgHintsKey}" Stretch="Uniform" AlignmentY="Top" AlignmentX="Center"></ImageBrush>
+				<ImageBrush x:Name="bgHintsBrush" RenderOptions.BitmapScalingMode="HighQuality" ImageSource="{StaticResource BgHintsKey}" Stretch="Uniform" AlignmentY="Top" AlignmentX="Center"></ImageBrush>
 			</StackPanel.Background>
 
 			<Grid>

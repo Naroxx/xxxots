@@ -11,11 +11,12 @@
 		ResizeMode="NoResize"
 		WindowStyle="None"
 		WindowStartupLocation="CenterScreen"
-		Title="XXXOTS Launcher" Height="400" Width="800">
+		Title="XXXOTS Launcher" Height="400" Width="800"
+		RenderOptions.BitmapScalingMode="HighQuality" UseLayoutRounding="True">
 	<Grid>
 		<Image
-			Height="150"
-			Source="pack://application:,,,/Assets/logo.png"
+			Height="120"
+			Source="pack://application:,,,/Assets/logo_network.png"
 			Stretch="Uniform"
 			HorizontalAlignment="Center"
 			VerticalAlignment="Center"

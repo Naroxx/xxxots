@@ -7,11 +7,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Net;
-using System.Collections.Generic;
-using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -21,32 +18,54 @@ namespace CanaryLauncherUpdate
 {
 	public partial class MainWindow : Window
 	{
-		// Loaded by SplashScreen before this window is created
-		static ClientConfig clientConfig => ClientConfig.Current;
+		// 2.0: the selected server; both profiles are loaded by SplashScreen before this window is created
+		ServerProfile current;
 
-		static string clientExecutableName => clientConfig.clientExecutable;
-		static string urlClient => clientConfig.newClientUrl;
-		static string programVersion => clientConfig.launcherVersion;
+		ClientConfig clientConfig => current.Config;
+		string clientExecutableName => clientConfig.clientExecutable;
+		string urlClient => clientConfig.newClientUrl;
+		static string programVersion
+		{
+			get
+			{
+				Version v = LauncherUpdater.CurrentVersion;
+				return v.Major + "." + v.Minor;
+			}
+		}
 
 		string newVersion = "";
-		bool clientDownloaded = false;
 		bool needUpdate = false;
+		bool downloading = false;
 
 		WebClient webClient = new WebClient();
 
+		private static string LauncherDirectory => AppDomain.CurrentDomain.BaseDirectory;
+
 		private string GetLauncherPath(bool onlyBaseDirectory = false)
 		{
-			string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-			if (string.IsNullOrEmpty(clientConfig.clientFolder) || onlyBaseDirectory) {
-				return baseDirectory;
+			if (onlyBaseDirectory || clientConfig == null || string.IsNullOrEmpty(clientConfig.clientFolder))
+			{
+				return LauncherDirectory;
 			}
 
-			return Path.Combine(baseDirectory, clientConfig.clientFolder);
+			return Path.Combine(LauncherDirectory, clientConfig.clientFolder);
 		}
+
+		private string LocalConfigPath => Path.Combine(LauncherDirectory, current.LocalConfigName);
 
 		private string GetClientExecutablePath()
 		{
 			return Path.Combine(GetLauncherPath(), "bin", clientExecutableName);
+		}
+
+		private string GetInstalledVersion()
+		{
+			return ClientConfig.GetLocalClientVersion(LauncherDirectory, current.LocalConfigName);
+		}
+
+		private BitmapImage Img(string packUri)
+		{
+			return new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), packUri));
 		}
 
 		private void StartClient()
@@ -87,55 +106,139 @@ namespace CanaryLauncherUpdate
 
 		private void TibiaLauncher_Load(object sender, RoutedEventArgs e)
 		{
-			ImageLogoServer.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/logo.png"));
-			ImageLogoCompany.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/logo_company.png"));
+			labelVersion.Text = "v" + programVersion;
+			tileXxxName.Text = ServerProfile.Xxx.DisplayName;
+			tileXxxSub.Text = ServerProfile.Xxx.Subtitle;
+			tileUltraName.Text = ServerProfile.Ultra.DisplayName;
+			tileUltraSub.Text = ServerProfile.Ultra.Subtitle;
 
-			newVersion = clientConfig.clientVersion;
-			progressbarDownload.Visibility = Visibility.Collapsed;
-			labelClientVersion.Visibility = Visibility.Collapsed;
-			labelDownloadPercent.Visibility = Visibility.Collapsed;
-
-			if (File.Exists(Path.Combine(GetLauncherPath(true), ClientConfig.LocalConfigName)))
+			ServerProfile start = ServerProfile.LoadLastChoice(LauncherDirectory);
+			if (start == null || !start.IsAvailable)
 			{
-				// Read actual client version
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				labelVersion.Text = "v" + programVersion;
-
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-					buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_update.png"));
-					labelClientVersion.Content = newVersion;
-					labelClientVersion.Visibility = Visibility.Visible;
-					buttonPlay.Visibility = Visibility.Visible;
-					buttonPlay_tooltip.Text = "Update";
-					needUpdate = true;
-				}
+				start = ServerProfile.Xxx;
 			}
-			if (!File.Exists(Path.Combine(GetLauncherPath(true), ClientConfig.LocalConfigName)) || Directory.Exists(GetLauncherPath()) && Directory.GetFiles(GetLauncherPath()).Length == 0 && Directory.GetDirectories(GetLauncherPath()).Length == 0)
+			SelectServer(start);
+			RefreshStatusAsync();
+		}
+
+		// Online/players for both servers in the tiles (does not block the window)
+		private async void RefreshStatusAsync()
+		{
+			foreach (ServerProfile profile in ServerProfile.All)
 			{
-				labelVersion.Text = "v" + programVersion;
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-				buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_update.png"));
-				labelClientVersion.Content = "Download";
-				labelClientVersion.Visibility = Visibility.Visible;
-				buttonPlay.Visibility = Visibility.Visible;
-				buttonPlay_tooltip.Text = "Download";
-				needUpdate = true;
+				ServerProfile p = profile;
+				string text;
+				if (!p.IsAvailable)
+				{
+					text = "Unavailable";
+				}
+				else if (p.IsBeforeLaunch)
+				{
+					DateTime local = p.LaunchUtc.Value.ToLocalTime();
+					text = "Start " + local.ToString("dd.MM, HH:mm");
+				}
+				else
+				{
+					int players = await Task.Run(() => p.FetchPlayersOnline());
+					text = players >= 0 ? "Online: " + players : "Offline";
+				}
+
+				if (p == ServerProfile.Xxx) tileXxxStatus.Text = text; else tileUltraStatus.Text = text;
 			}
 		}
 
-		static string GetClientVersion(string path)
+		private void tileXxx_MouseDown(object sender, MouseButtonEventArgs e)
 		{
-			return ClientConfig.GetLocalClientVersion(path);
+			SelectServer(ServerProfile.Xxx);
+		}
+
+		private void tileUltra_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			SelectServer(ServerProfile.Ultra);
+		}
+
+		private void SelectServer(ServerProfile profile)
+		{
+			if (downloading || profile == null)
+			{
+				return;
+			}
+
+			current = profile;
+			ServerProfile.SaveLastChoice(LauncherDirectory, profile);
+
+			// Look of the selected server
+			backgroundBrush.ImageSource = Img(profile.Asset("background.jpg"));
+			ImageLogoServer.Source = Img(profile.Asset("logo.png"));
+			bgButtonBrush.ImageSource = Img(profile.Asset("bg_button_update.png"));
+			bgHintsBrush.ImageSource = Img(profile.Asset("bg_hints.png"));
+
+			Brush accent = (Brush)new BrushConverter().ConvertFromString(profile.AccentColor);
+			Brush idle = new SolidColorBrush(Color.FromArgb(0x55, 0x80, 0x80, 0x80));
+			tileXxx.BorderBrush = profile == ServerProfile.Xxx ? accent : idle;
+			tileUltra.BorderBrush = profile == ServerProfile.Ultra ? accent : idle;
+			// wlasciciel 25.10: niewybrany kafelek bez przygaszenia - wybrany wyroznia tylko ramka w kolorze serwera
+
+			RefreshClientState();
+		}
+
+		// Play / Update / Download for the selected server
+		private void RefreshClientState()
+		{
+			progressbarDownload.Visibility = Visibility.Collapsed;
+			labelDownloadPercent.Visibility = Visibility.Collapsed;
+
+			if (!current.IsAvailable)
+			{
+				buttonPlay.Visibility = Visibility.Collapsed;
+				labelClientVersion.Content = "Unavailable";
+				labelClientVersion.Visibility = Visibility.Visible;
+				return;
+			}
+
+			newVersion = clientConfig.clientVersion;
+			string actualVersion = GetInstalledVersion();
+			bool installed = File.Exists(LocalConfigPath) && File.Exists(GetClientExecutablePath());
+
+			buttonPlay.Visibility = Visibility.Visible;
+			labelClientVersion.Visibility = Visibility.Visible;
+			if (!installed)
+			{
+				SetButton(false);
+				labelClientVersion.Content = "Download";
+				buttonPlay_tooltip.Text = "Download";
+				needUpdate = true;
+			}
+			else if (newVersion != actualVersion)
+			{
+				SetButton(false);
+				labelClientVersion.Content = "Update";
+				buttonPlay_tooltip.Text = "Update to " + newVersion;
+				needUpdate = true;
+			}
+			else
+			{
+				SetButton(true);
+				// wlasciciel 25.10: zamiast wersji klienta (15.00.249ccc...) nazwa swiata
+				labelClientVersion.Content = current.ReadyLabel;
+				buttonPlay_tooltip.Text = actualVersion;
+				needUpdate = false;
+			}
+		}
+
+		private void SetButton(bool play, bool hover = false)
+		{
+			string name = play ? (hover ? "button_hover_play.png" : "button_play.png") : (hover ? "button_hover_update.png" : "button_update.png");
+			var brush = new ImageBrush(Img(current.Asset(name)));
+			RenderOptions.SetBitmapScalingMode(brush, BitmapScalingMode.HighQuality);
+			buttonPlay.Background = brush;
+			buttonPlayIcon.Source = Img("pack://application:,,,/Assets/" + (play ? "icon_play.png" : "icon_update.png"));
 		}
 
 		private void UpdateClient()
 		{
-			if (!Directory.Exists(GetLauncherPath(true)))
-			{
-				Directory.CreateDirectory(GetLauncherPath());
-			}
+			Directory.CreateDirectory(GetLauncherPath());
+			downloading = true;
 			labelDownloadPercent.Visibility = Visibility.Visible;
 			progressbarDownload.Visibility = Visibility.Visible;
 			labelClientVersion.Visibility = Visibility.Collapsed;
@@ -145,7 +248,12 @@ namespace CanaryLauncherUpdate
 
 		private void buttonPlay_Click(object sender, RoutedEventArgs e)
 		{
-			if (needUpdate == true || !Directory.Exists(GetLauncherPath()))
+			if (!current.IsAvailable)
+			{
+				return;
+			}
+
+			if (needUpdate || !File.Exists(GetClientExecutablePath()))
 			{
 				try
 				{
@@ -153,27 +261,13 @@ namespace CanaryLauncherUpdate
 				}
 				catch (Exception ex)
 				{
-					labelVersion.Text = ex.ToString();
+					downloading = false;
+					labelVersion.Text = ex.GetBaseException().Message;
 				}
+				return;
 			}
-			else
-			{
-				if (clientDownloaded == true || File.Exists(GetClientExecutablePath()))
-				{
-					StartClient();
-				}
-				else
-				{
-					try
-					{
-						UpdateClient();
-					}
-					catch (Exception ex)
-					{
-						labelVersion.Text = ex.ToString();
-					}
-				}
-			}
+
+			StartClient();
 		}
 
 		// Extracts with overwrite and refuses entries that would land outside the client folder
@@ -224,14 +318,12 @@ namespace CanaryLauncherUpdate
 
 		private void ShowUpdateFailed(string message)
 		{
+			downloading = false;
 			string zipPath = Path.Combine(GetLauncherPath(), "tibia.zip");
 			try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch (Exception) { }
 
 			MessageBox.Show("Update failed:\n" + message, "XXXOTS Launcher", MessageBoxButton.OK, MessageBoxImage.Error);
-			progressbarDownload.Visibility = Visibility.Collapsed;
-			labelDownloadPercent.Visibility = Visibility.Collapsed;
-			labelClientVersion.Visibility = Visibility.Visible;
-			buttonPlay.Visibility = Visibility.Visible;
+			RefreshClientState();
 		}
 
 		private async void Client_DownloadFileCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
@@ -242,31 +334,33 @@ namespace CanaryLauncherUpdate
 				return;
 			}
 
+			ClientConfig config = clientConfig;
+			string clientPath = GetLauncherPath();
+			string localPath = LocalConfigPath;
 			try
 			{
-				string zipPath = Path.Combine(GetLauncherPath(), "tibia.zip");
+				string zipPath = Path.Combine(clientPath, "tibia.zip");
 
-				// Adds the task to a secondary task to prevent the program from crashing while this is running
 				labelDownloadPercent.Content = "Verifying...";
 				await Task.Run(() =>
 				{
 					// Only install the exact archive that was published
-					if (!string.IsNullOrEmpty(clientConfig.clientSha256)
-						&& !string.Equals(ComputeSha256(zipPath), clientConfig.clientSha256, StringComparison.OrdinalIgnoreCase))
+					if (!string.IsNullOrEmpty(config.clientSha256)
+						&& !string.Equals(ComputeSha256(zipPath), config.clientSha256, StringComparison.OrdinalIgnoreCase))
 					{
 						throw new InvalidDataException("Downloaded client is corrupted (checksum mismatch). Please try again.");
 					}
 
-					if (clientConfig.replaceFolders && clientConfig.replaceFolderName != null)
+					if (config.replaceFolders && config.replaceFolderName != null)
 					{
-						foreach (ReplaceFolderName folderName in clientConfig.replaceFolderName)
+						foreach (ReplaceFolderName folderName in config.replaceFolderName)
 						{
 							if (folderName == null || !IsPlainFolderName(folderName.name))
 							{
 								continue;
 							}
 
-							string folderPath = Path.Combine(GetLauncherPath(), folderName.name);
+							string folderPath = Path.Combine(clientPath, folderName.name);
 							if (Directory.Exists(folderPath))
 							{
 								Directory.Delete(folderPath, true);
@@ -274,15 +368,14 @@ namespace CanaryLauncherUpdate
 						}
 					}
 
-					Directory.CreateDirectory(GetLauncherPath());
+					Directory.CreateDirectory(clientPath);
 					ExtractZip(zipPath);
 					File.Delete(zipPath);
 				});
 				progressbarDownload.Value = 100;
 
-				// Remember the installed version next to the launcher
-				string localPath = Path.Combine(GetLauncherPath(true), ClientConfig.LocalConfigName);
-				File.WriteAllText(localPath, JsonConvert.SerializeObject(clientConfig, Formatting.Indented));
+				// Remember the installed version of this server next to the launcher
+				File.WriteAllText(localPath, JsonConvert.SerializeObject(config, Formatting.Indented));
 			}
 			catch (Exception ex)
 			{
@@ -290,19 +383,9 @@ namespace CanaryLauncherUpdate
 				return;
 			}
 
-			buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
-			buttonPlayIcon.Source = new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/icon_play.png"));
-
 			CreateShortcut();
-
-			needUpdate = false;
-			clientDownloaded = true;
-			labelClientVersion.Content = GetClientVersion(GetLauncherPath(true));
-			buttonPlay_tooltip.Text = GetClientVersion(GetLauncherPath(true));
-			labelClientVersion.Visibility = Visibility.Visible;
-			buttonPlay.Visibility = Visibility.Visible;
-			progressbarDownload.Visibility = Visibility.Collapsed;
-			labelDownloadPercent.Visibility = Visibility.Collapsed;
+			downloading = false;
+			RefreshClientState();
 		}
 
 		private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
@@ -337,42 +420,12 @@ namespace CanaryLauncherUpdate
 
 		private void buttonPlay_MouseEnter(object sender, MouseEventArgs e)
 		{
-			if (File.Exists(Path.Combine(GetLauncherPath(true), ClientConfig.LocalConfigName)))
-			{
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_update.png")));
-				}
-				if (newVersion == actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_play.png")));
-				}
-			}
-			else
-			{
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_hover_update.png")));
-			}
+			if (current.IsAvailable) SetButton(!needUpdate, true);
 		}
 
 		private void buttonPlay_MouseLeave(object sender, MouseEventArgs e)
 		{
-			if (File.Exists(Path.Combine(GetLauncherPath(true), ClientConfig.LocalConfigName)))
-			{
-				string actualVersion = GetClientVersion(GetLauncherPath(true));
-				if (newVersion != actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-				}
-				if (newVersion == actualVersion)
-				{
-					buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_play.png")));
-				}
-			}
-			else
-			{
-				buttonPlay.Background = new ImageBrush(new BitmapImage(new Uri(BaseUriHelper.GetBaseUri(this), "pack://application:,,,/Assets/button_update.png")));
-			}
+			if (current.IsAvailable) SetButton(!needUpdate, false);
 		}
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -380,21 +433,9 @@ namespace CanaryLauncherUpdate
 			Close();
 		}
 
-		private void RestoreButton_Click(object sender, RoutedEventArgs e)
-		{
-			if (ResizeMode != ResizeMode.NoResize)
-			{
-				if (WindowState == WindowState.Normal)
-					WindowState = WindowState.Maximized;
-				else
-					WindowState = WindowState.Normal;
-			}
-		}
-
 		private void MinimizeButton_Click(object sender, RoutedEventArgs e)
 		{
 			WindowState = WindowState.Minimized;
 		}
-
 	}
 }

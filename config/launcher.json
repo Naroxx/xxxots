@@ -1,17 +1,25 @@
 {
-	"clientVersion": "15.00.249ccc-2",
-	"launcherVersion": "1.2",
-	"launcherUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-1.2/XXXOTS-Launcher.zip",
-	"launcherSha256": "2c7779fd6fd103f95ff1c41dc23a443394b568edfa351b091fd3cda8e8f34761",
+	"clientVersion": "15.00.249ccc-3",
+	"launcherVersion": "2.0",
+	"launcherUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-2.0/XXXOTS-Launcher.zip",
+	"launcherSha256": "f97e3a771c5e4da82aafdd8d666dcab0f64d040831d2a58ec6ec902d589c470b",
 	"replaceFolders": true,
 	"replaceFolderName": [
-		{ "name": "assets" },
-		{ "name": "bin" },
-		{ "name": "storeimages" },
-		{ "name": "sounds" }
+		{
+			"name": "assets"
+		},
+		{
+			"name": "bin"
+		},
+		{
+			"name": "storeimages"
+		},
+		{
+			"name": "sounds"
+		}
 	],
 	"clientFolder": "XXXOTS",
-	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-15.00.249ccc-2/XXXOTS-client.zip",
-	"clientSha256": "29ed38e7c8ec3b14b0fefc78d728b0ebb4ef16c51e69a13ddb82168c7c738a68",
+	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-15.00.249ccc-3/XXXOTS-client.zip",
+	"clientSha256": "7404bc6aed5418f2fe30715b1d95e77cba90fe97b00adde3b946d3b8ac3f55b8",
 	"clientExecutable": "XXXOTS.exe"
 }

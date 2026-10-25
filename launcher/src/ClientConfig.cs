@@ -96,7 +96,13 @@ namespace LauncherConfig
 		// Version of the client installed next to the launcher, or "" when unknown
 		public static string GetLocalClientVersion(string directory)
 		{
-			string path = Path.Combine(directory, LocalConfigName);
+			return GetLocalClientVersion(directory, LocalConfigName);
+		}
+
+		// 2.0: each server remembers its installed client in its own file (ServerProfile.LocalConfigName)
+		public static string GetLocalClientVersion(string directory, string localConfigName)
+		{
+			string path = Path.Combine(directory, localConfigName);
 			if (!File.Exists(path))
 			{
 				return "";
