@@ -41,6 +41,117 @@
 			<BitmapImage x:Key="IconPlayKey" UriSource="pack://application:,,,/Assets/icon_play.png"/>
 			<BitmapImage x:Key="BgHintsKey" UriSource="pack://application:,,,/Assets/bg_hints.png"/>
 			<BitmapImage x:Key="RhLoreKey" UriSource="pack://application:,,,/Assets/rh_lore.png"/>
+
+			<!-- 2.1: XXXBOT -->
+			<Style x:Key="BotTileStyle" TargetType="{x:Type Button}">
+				<Setter Property="Cursor" Value="Hand"/>
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Button}">
+							<Border x:Name="bd" Background="#C8101010" BorderBrush="#FF5C4D36" BorderThickness="2" CornerRadius="4">
+								<ContentPresenter/>
+							</Border>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="bd" Property="BorderBrush" Value="#E8B04A"/>
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+			<Style x:Key="BotButtonStyle" TargetType="{x:Type Button}">
+				<Setter Property="Foreground" Value="#2B1A05"/>
+				<Setter Property="FontFamily" Value="Verdana"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="FontWeight" Value="Bold"/>
+				<Setter Property="Cursor" Value="Hand"/>
+				<Setter Property="Padding" Value="16,7"/>
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Button}">
+							<Grid>
+								<Border CornerRadius="3" BorderThickness="1" BorderBrush="#7A5216">
+									<Border.Background>
+										<LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+											<GradientStop Color="#F6CF7A" Offset="0"/>
+											<GradientStop Color="#C98A2B" Offset="1"/>
+										</LinearGradientBrush>
+									</Border.Background>
+								</Border>
+								<Border x:Name="hl" CornerRadius="3" Background="#38FFFFFF" Visibility="Collapsed"/>
+								<ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Grid>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="hl" Property="Visibility" Value="Visible"/>
+								</Trigger>
+								<Trigger Property="IsEnabled" Value="False">
+									<Setter Property="Opacity" Value="0.45"/>
+									<Setter Property="Cursor" Value="Arrow"/>
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+			<Style x:Key="BotButtonSecondaryStyle" TargetType="{x:Type Button}">
+				<Setter Property="Foreground" Value="#E8B04A"/>
+				<Setter Property="FontFamily" Value="Verdana"/>
+				<Setter Property="FontSize" Value="11"/>
+				<Setter Property="FontWeight" Value="Bold"/>
+				<Setter Property="Cursor" Value="Hand"/>
+				<Setter Property="Padding" Value="12,7"/>
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type Button}">
+							<Border x:Name="bd" CornerRadius="3" BorderThickness="1" BorderBrush="#9A7432" Background="#1E1E1E">
+								<ContentPresenter Margin="{TemplateBinding Padding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+							</Border>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="bd" Property="Background" Value="#2E2A22"/>
+									<Setter TargetName="bd" Property="BorderBrush" Value="#E8B04A"/>
+								</Trigger>
+								<Trigger Property="IsEnabled" Value="False">
+									<Setter Property="Opacity" Value="0.4"/>
+									<Setter Property="Cursor" Value="Arrow"/>
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
+			<Style x:Key="BotCheckStyle" TargetType="{x:Type CheckBox}">
+				<Setter Property="Foreground" Value="#E0E0E0"/>
+				<Setter Property="FontFamily" Value="Verdana"/>
+				<Setter Property="FontSize" Value="12"/>
+				<Setter Property="Cursor" Value="Hand"/>
+				<Setter Property="Template">
+					<Setter.Value>
+						<ControlTemplate TargetType="{x:Type CheckBox}">
+							<StackPanel Orientation="Horizontal" Background="Transparent">
+								<Border x:Name="box" Width="17" Height="17" CornerRadius="2" BorderThickness="1.5" BorderBrush="#E8B04A" Background="#1A1A1A" VerticalAlignment="Center">
+									<Path x:Name="mark" Data="M 3,8.5 L 6.5,12 L 13.5,4" Stroke="#F6CF7A" StrokeThickness="2.2" Visibility="Collapsed"/>
+								</Border>
+								<ContentPresenter Margin="9,0,0,0" VerticalAlignment="Center"/>
+							</StackPanel>
+							<ControlTemplate.Triggers>
+								<Trigger Property="IsChecked" Value="True">
+									<Setter TargetName="mark" Property="Visibility" Value="Visible"/>
+									<Setter TargetName="box" Property="Background" Value="#3A2A10"/>
+								</Trigger>
+								<Trigger Property="IsMouseOver" Value="True">
+									<Setter TargetName="box" Property="BorderBrush" Value="#F6CF7A"/>
+								</Trigger>
+								<Trigger Property="IsEnabled" Value="False">
+									<Setter Property="Opacity" Value="0.45"/>
+								</Trigger>
+							</ControlTemplate.Triggers>
+						</ControlTemplate>
+					</Setter.Value>
+				</Setter>
+			</Style>
 		</Grid.Resources>
 		<Grid.Background>
 			<ImageBrush x:Name="backgroundBrush" RenderOptions.BitmapScalingMode="HighQuality" ImageSource="{StaticResource BackGroundKey}" Stretch="UniformToFill" Opacity="100"></ImageBrush>
@@ -101,6 +212,28 @@
 				</StackPanel>
 			</Grid>
 		</Border>
+		<!-- 2.1: XXXBOT (przy obu serwerach) - klik otwiera okienko bota -->
+		<Button x:Name="tileBot" Grid.Row="1" Width="200" Height="62" Margin="22,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+				Visibility="Collapsed" Focusable="False" Style="{StaticResource BotTileStyle}" Click="tileBot_Click">
+			<Button.ToolTip>
+				<ToolTip>
+					<TextBlock Foreground="#404348" FontWeight="Bold">XXXBOT — pobierz, aktualizuj, uruchamiaj z klientem</TextBlock>
+				</ToolTip>
+			</Button.ToolTip>
+			<Grid Margin="6,3">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="54"/>
+					<ColumnDefinition Width="*"/>
+				</Grid.ColumnDefinitions>
+				<Image Grid.Column="0" Source="pack://application:,,,/Assets/logo_bot_tile.png" Height="50" Stretch="Uniform" VerticalAlignment="Center"/>
+				<StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="6,0,0,0">
+					<TextBlock FontFamily="Verdana" FontSize="13" FontWeight="Bold" Foreground="#E8B04A">XXXBOT</TextBlock>
+					<TextBlock x:Name="tileBotSub" FontFamily="Verdana" FontSize="9" Foreground="#a0a0a0" Margin="0,1,0,0">Alpha Test · za darmo</TextBlock>
+					<TextBlock x:Name="tileBotStatus" FontFamily="Verdana" FontSize="11" FontWeight="Bold" Foreground="#d8d8d8" Margin="0,3,0,0">Pobierz</TextBlock>
+				</StackPanel>
+			</Grid>
+		</Button>
+
 		<StackPanel
 			Grid.Row="0"
 			VerticalAlignment="Bottom"
@@ -306,5 +439,60 @@
 					Margin="0, 0, 0, 20"/>
 			</Grid>
 		</StackPanel>
+
+		<!-- 2.1: okienko XXXBOT (na wierzchu calego okna; klik obok zamyka) -->
+		<Grid x:Name="botPanel" Grid.RowSpan="3" Background="#C8000000" Visibility="Collapsed" MouseLeftButtonDown="botPanel_MouseDown">
+			<Border Width="610" Height="296" Background="#F5141414" BorderBrush="#E8B04A" BorderThickness="2" CornerRadius="6">
+				<Grid Margin="18,14,18,14">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="170"/>
+						<ColumnDefinition Width="*"/>
+					</Grid.ColumnDefinitions>
+
+					<Image Grid.Column="0" Source="pack://application:,,,/Assets/logo_bot.png" Height="168" Stretch="Uniform" VerticalAlignment="Top" Margin="0,8,0,0"/>
+
+					<Button x:Name="botClose" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-8,0"
+							Style="{StaticResource WindowButtonStyle}" Content="{StaticResource close_ico}" Click="botClose_Click" Cursor="Hand"/>
+
+					<StackPanel Grid.Column="1" Margin="14,0,0,0">
+						<StackPanel Orientation="Horizontal">
+							<TextBlock FontFamily="Verdana" FontSize="22" FontWeight="Bold" Foreground="#E8B04A">XXXBOT</TextBlock>
+							<Border Background="#3A2A10" BorderBrush="#9A7432" BorderThickness="1" CornerRadius="3" Margin="10,4,0,0" Padding="6,1" VerticalAlignment="Center">
+								<TextBlock FontFamily="Verdana" FontSize="10" FontWeight="Bold" Foreground="#F6CF7A">ALPHA TEST · ZA DARMO</TextBlock>
+							</Border>
+						</StackPanel>
+						<TextBlock FontFamily="Verdana" FontSize="12" Foreground="#E0E0E0" TextWrapping="Wrap" Margin="0,6,0,0">Nasz autorski bot do XXXOTS i XXXOTS ULTRA.</TextBlock>
+						<TextBlock FontFamily="Verdana" FontSize="11" Foreground="#B8B8B8" TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="17">
+							• leczenie, mikstury, rotacja ataku i targeting<LineBreak/>
+							• haste, buffy, zamiana ring/amulet, alarmy<LineBreak/>
+							• bez cavebota i follow — bot nigdy nie rusza postacią</TextBlock>
+
+						<TextBlock x:Name="botVersionText" FontFamily="Verdana" FontSize="11" Foreground="#d8d8d8" Margin="0,10,0,0">Wersja</TextBlock>
+
+						<StackPanel x:Name="botProgressBox" Margin="0,8,0,0" Visibility="Collapsed">
+							<ProgressBar x:Name="botProgress" Height="12" Minimum="0" Maximum="100" Value="0" Background="#1E1E1E" BorderBrush="#9A7432">
+								<ProgressBar.Foreground>
+									<LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+										<GradientStop Color="#F6CF7A" Offset="0"/>
+										<GradientStop Color="#C98A2B" Offset="1"/>
+									</LinearGradientBrush>
+								</ProgressBar.Foreground>
+							</ProgressBar>
+							<TextBlock x:Name="botProgressText" FontFamily="Verdana" FontSize="10" Foreground="#bfbfbf" Margin="0,3,0,0">Pobieranie…</TextBlock>
+						</StackPanel>
+
+						<StackPanel x:Name="botButtons" Orientation="Horizontal" Margin="0,10,0,0">
+							<Button x:Name="botMainButton" Style="{StaticResource BotButtonStyle}" Click="botMainButton_Click">Pobierz</Button>
+							<Button x:Name="botManualButton" Style="{StaticResource BotButtonSecondaryStyle}" Margin="8,0,0,0" Click="botManualButton_Click">Instrukcja</Button>
+							<Button x:Name="botPageButton" Style="{StaticResource BotButtonSecondaryStyle}" Margin="8,0,0,0" Click="botPageButton_Click">Strona</Button>
+						</StackPanel>
+
+						<CheckBox x:Name="botLaunchCheck" Style="{StaticResource BotCheckStyle}" Margin="0,14,0,0"
+								  Checked="botLaunchCheck_Changed" Unchecked="botLaunchCheck_Changed">Uruchamiaj XXXBOT razem z klientem</CheckBox>
+						<TextBlock FontFamily="Verdana" FontSize="10" Foreground="#8A8A8A" TextWrapping="Wrap" Margin="26,4,0,0">Bot startuje zatrzymany — włączasz go przyciskiem START. Nowa wersja pobierze się sama przed grą.</TextBlock>
+					</StackPanel>
+				</Grid>
+			</Border>
+		</Grid>
 	</Grid>
 </Window>

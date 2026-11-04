@@ -7,9 +7,9 @@ using System.Windows;
 [assembly: AssemblyCompany("XXXOTS")]
 [assembly: AssemblyProduct("XXXOTS Launcher")]
 [assembly: AssemblyCopyright("Copyright © 2026 XXXOTS")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
-[assembly: AssemblyInformationalVersion("2.0.0")]
+[assembly: AssemblyVersion("2.1.0.0")]
+[assembly: AssemblyFileVersion("2.1.0.0")]
+[assembly: AssemblyInformationalVersion("2.1.0")]
 [assembly: ComVisible(false)]
 
 [assembly: ThemeInfo(

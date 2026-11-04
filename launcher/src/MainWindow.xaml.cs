@@ -39,6 +39,11 @@ namespace CanaryLauncherUpdate
 
 		WebClient webClient = new WebClient();
 
+		// 2.1: XXXBOT (only for the XXX server; offered when the XXX config has bot fields)
+		BotManager bot;
+		bool botBusy = false;
+		bool botUiLoading = false;
+
 		private static string LauncherDirectory => AppDomain.CurrentDomain.BaseDirectory;
 
 		private string GetLauncherPath(bool onlyBaseDirectory = false)
@@ -79,6 +84,7 @@ namespace CanaryLauncherUpdate
 
 			ClientConfig.ClearStaleServerCache(GetLauncherPath());
 			Process.Start(new ProcessStartInfo(executable) { WorkingDirectory = Path.GetDirectoryName(executable) });
+			StartBotWithClient();
 			this.Close();
 		}
 
@@ -107,6 +113,7 @@ namespace CanaryLauncherUpdate
 		private void TibiaLauncher_Load(object sender, RoutedEventArgs e)
 		{
 			labelVersion.Text = "v" + programVersion;
+			bot = new BotManager(LauncherDirectory, ServerProfile.Xxx.Config);
 			tileXxxName.Text = ServerProfile.Xxx.DisplayName;
 			tileXxxSub.Text = ServerProfile.Xxx.Subtitle;
 			tileUltraName.Text = ServerProfile.Ultra.DisplayName;
@@ -180,6 +187,7 @@ namespace CanaryLauncherUpdate
 			// wlasciciel 25.10: niewybrany kafelek bez przygaszenia - wybrany wyroznia tylko ramka w kolorze serwera
 
 			RefreshClientState();
+			RefreshBot();
 		}
 
 		// Play / Update / Download for the selected server
@@ -246,9 +254,9 @@ namespace CanaryLauncherUpdate
 			webClient.DownloadFileAsync(new Uri(urlClient), Path.Combine(GetLauncherPath(), "tibia.zip"));
 		}
 
-		private void buttonPlay_Click(object sender, RoutedEventArgs e)
+		private async void buttonPlay_Click(object sender, RoutedEventArgs e)
 		{
-			if (!current.IsAvailable)
+			if (!current.IsAvailable || botBusy || downloading)
 			{
 				return;
 			}
@@ -267,7 +275,231 @@ namespace CanaryLauncherUpdate
 				return;
 			}
 
+			// 2.1: "start XXXBOT with the client" also keeps it up to date - the new version is fetched first
+			if (BotGoesWithClient() && bot.NeedsInstall && !bot.RunningFromOurFolder())
+			{
+				buttonPlay.IsEnabled = false;
+				labelClientVersion.Content = "XXXBOT…";
+				try
+				{
+					await InstallBotAsync(false);
+				}
+				catch (Exception)
+				{
+					// The game always starts; the old bot (if any) is used
+				}
+				buttonPlay.IsEnabled = true;
+			}
+
 			StartClient();
+		}
+
+		// ------------------------------------------------------------ XXXBOT (2.1)
+
+		// Wlasciciel 04.11: jeden launcher dla 2 serwerow i bot przy obu - bot sam rozpoznaje klienta XXXOTS / ULTRA
+		private bool BotOffered => bot != null && current != null && current.IsAvailable && bot.IsOffered;
+
+		private bool BotGoesWithClient()
+		{
+			return BotOffered && bot.LaunchWithClient;
+		}
+
+		private void StartBotWithClient()
+		{
+			try
+			{
+				if (BotGoesWithClient() && bot.IsInstalled && !bot.AnyRunning())
+				{
+					bot.Start();
+				}
+			}
+			catch (Exception)
+			{
+				// The bot never blocks the game start
+			}
+		}
+
+		private void RefreshBot()
+		{
+			if (!BotOffered)
+			{
+				tileBot.Visibility = Visibility.Collapsed;
+				botPanel.Visibility = Visibility.Collapsed;
+				return;
+			}
+
+			tileBot.Visibility = Visibility.Visible;
+			string latest = BotManager.Short(bot.LatestVersion);
+			bool withClient = bot.LaunchWithClient;
+			tileBotSub.Text = withClient ? "Uruchamia się z klientem" : "Alpha Test · za darmo";
+
+			if (botBusy)
+			{
+				tileBotStatus.Text = "Pobieranie…";
+				tileBotStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF6, 0xCF, 0x7A));
+			}
+			else if (!bot.IsInstalled)
+			{
+				tileBotStatus.Text = "Pobierz " + latest;
+				tileBotStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF6, 0xCF, 0x7A));
+			}
+			else if (bot.UpdateAvailable)
+			{
+				tileBotStatus.Text = "Nowa wersja " + latest + "!";
+				tileBotStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0x9A, 0x3C));
+			}
+			else
+			{
+				tileBotStatus.Text = "Wersja " + BotManager.Short(bot.InstalledVersion) + " ✓";
+				tileBotStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x8B, 0xE3, 0x3A));
+			}
+
+			// Panel
+			string installed = bot.IsInstalled ? BotManager.Short(bot.InstalledVersion) : "brak";
+			botVersionText.Text = "Zainstalowana: " + installed + "   ·   Najnowsza: " + latest;
+			if (!bot.IsInstalled)
+			{
+				botMainButton.Content = "Pobierz XXXBOT";
+			}
+			else if (bot.UpdateAvailable)
+			{
+				botMainButton.Content = "Aktualizuj do " + latest;
+			}
+			else
+			{
+				botMainButton.Content = "Uruchom bota";
+			}
+			botMainButton.IsEnabled = !botBusy;
+			botManualButton.IsEnabled = !botBusy && File.Exists(bot.ManualPath);
+			botProgressBox.Visibility = botBusy ? Visibility.Visible : Visibility.Collapsed;
+
+			botUiLoading = true;
+			botLaunchCheck.IsChecked = withClient;
+			botUiLoading = false;
+		}
+
+		private void tileBot_Click(object sender, RoutedEventArgs e)
+		{
+			if (!BotOffered)
+			{
+				return;
+			}
+			RefreshBot();
+			botPanel.Visibility = Visibility.Visible;
+		}
+
+		private void botPanel_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			// Only a click on the dark background closes it, not a click inside the window
+			if (e.OriginalSource == botPanel && !botBusy)
+			{
+				botPanel.Visibility = Visibility.Collapsed;
+			}
+		}
+
+		private void botClose_Click(object sender, RoutedEventArgs e)
+		{
+			botPanel.Visibility = Visibility.Collapsed;
+		}
+
+		private async void botMainButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (!BotOffered || botBusy)
+			{
+				return;
+			}
+
+			if (bot.NeedsInstall)
+			{
+				if (bot.RunningFromOurFolder())
+				{
+					MessageBox.Show("XXXBOT jest uruchomiony.\nZamknij go (także ikonkę przy zegarze), a potem kliknij „Aktualizuj” jeszcze raz.",
+						"XXXBOT", MessageBoxButton.OK, MessageBoxImage.Information);
+					return;
+				}
+				try
+				{
+					await InstallBotAsync(true);
+				}
+				catch (Exception ex)
+				{
+					MessageBox.Show("Nie udało się pobrać XXXBOT:\n" + ex.GetBaseException().Message, "XXXBOT", MessageBoxButton.OK, MessageBoxImage.Error);
+				}
+				return;
+			}
+
+			if (bot.AnyRunning())
+			{
+				MessageBox.Show("XXXBOT już działa (sprawdź też ikonkę przy zegarze).", "XXXBOT", MessageBoxButton.OK, MessageBoxImage.Information);
+				return;
+			}
+			try
+			{
+				bot.Start();
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show("Nie udało się uruchomić XXXBOT:\n" + ex.GetBaseException().Message, "XXXBOT", MessageBoxButton.OK, MessageBoxImage.Error);
+			}
+		}
+
+		private async Task InstallBotAsync(bool fromPanel)
+		{
+			botBusy = true;
+			botProgress.Value = 0;
+			botProgressText.Text = "Pobieranie…";
+			RefreshBot();
+			try
+			{
+				await bot.InstallAsync(percent => Dispatcher.BeginInvoke(new Action(() =>
+				{
+					botProgress.Value = percent;
+					botProgressText.Text = percent >= 100 ? "Instalowanie…" : "Pobieranie… " + percent + "%";
+				})));
+			}
+			finally
+			{
+				botBusy = false;
+				RefreshBot();
+			}
+		}
+
+		private void botManualButton_Click(object sender, RoutedEventArgs e)
+		{
+			try
+			{
+				if (bot != null && File.Exists(bot.ManualPath))
+				{
+					Process.Start(new ProcessStartInfo(bot.ManualPath) { UseShellExecute = true });
+				}
+			}
+			catch (Exception)
+			{
+			}
+		}
+
+		private void botPageButton_Click(object sender, RoutedEventArgs e)
+		{
+			try
+			{
+				if (bot != null)
+				{
+					Process.Start(new ProcessStartInfo(bot.PageUrl) { UseShellExecute = true });
+				}
+			}
+			catch (Exception)
+			{
+			}
+		}
+
+		private void botLaunchCheck_Changed(object sender, RoutedEventArgs e)
+		{
+			if (botUiLoading || bot == null)
+			{
+				return;
+			}
+			bot.LaunchWithClient = botLaunchCheck.IsChecked == true;
+			RefreshBot();
 		}
 
 		// Extracts with overwrite and refuses entries that would land outside the client folder
@@ -430,6 +662,10 @@ namespace CanaryLauncherUpdate
 
 		private void CloseButton_Click(object sender, RoutedEventArgs e)
 		{
+			if (botBusy)
+			{
+				return;
+			}
 			Close();
 		}
 

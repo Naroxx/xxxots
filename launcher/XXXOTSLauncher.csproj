@@ -62,6 +62,7 @@
     <Compile Include="src\LauncherUpdater.cs" />
     <Compile Include="src\SplashScreen.xaml.cs" />
     <Compile Include="src\ServerProfile.cs" />
+    <Compile Include="src\BotManager.cs" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
@@ -107,6 +108,8 @@
     <Resource Include="assets\logo_network.png" />
     <Resource Include="assets\logo_tile.png" />
     <Resource Include="assets\logo_tile_ultra.png" />
+    <Resource Include="assets\logo_bot.png" />
+    <Resource Include="assets\logo_bot_tile.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

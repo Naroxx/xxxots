@@ -24,6 +24,13 @@ namespace LauncherConfig
 		// Launcher self-update: zip with "XXXOTS Launcher.exe" + dlls, installed when launcherVersion is newer
 		public string launcherUrl { get; set; }
 		public string launcherSha256 { get; set; }
+		// 2.1: XXXBOT offered in the launcher (XXX config only); without botUrl/botSha256/botVersion it is hidden
+		public string botVersion { get; set; }
+		public string botUrl { get; set; }
+		public string botSha256 { get; set; }
+		public string botExecutable { get; set; }
+		public string botFolder { get; set; }
+		public string botPageUrl { get; set; }
 
 		// Loaded once by SplashScreen and shared with MainWindow
 		public static ClientConfig Current { get; private set; }
