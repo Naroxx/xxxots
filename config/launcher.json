@@ -1,5 +1,5 @@
 {
-	"clientVersion": "15.00.249ccc-3",
+	"clientVersion": "15.00.249ccc-4",
 	"launcherVersion": "2.1",
 	"launcherUrl": "https://github.com/Naroxx/xxxots/releases/download/launcher-2.1/XXXOTS-Launcher.zip",
 	"launcherSha256": "073b95fadce03b25c50af3f2cacc142220b3d74392377ec4a2f518076e73c493",
@@ -19,8 +19,8 @@
 		}
 	],
 	"clientFolder": "XXXOTS",
-	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-15.00.249ccc-3/XXXOTS-client.zip",
-	"clientSha256": "7404bc6aed5418f2fe30715b1d95e77cba90fe97b00adde3b946d3b8ac3f55b8",
+	"newClientUrl": "https://github.com/Naroxx/xxxots/releases/download/client-15.00.249ccc-4/XXXOTS-client.zip",
+	"clientSha256": "6683c6ae4dbb040fc72e1e759fd5286d388fbbb0298a914dd5ea7c3b9c138e28",
 	"clientExecutable": "XXXOTS.exe",
 	"botVersion": "1.3.4",
 	"botUrl": "https://github.com/Naroxx/xxxots/releases/download/xxxbot-1.3.4/XXXBOT-1.3.4.zip",
